@@ -1,0 +1,1 @@
+- Use average taxi time for last 7 days per airport , in order to feature engineer a new column for the testing data : avg taxi time. 
