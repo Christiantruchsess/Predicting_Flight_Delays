@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[6]:
-
-
-import pandas as pd
-
-
-# In[5]:
-
-
 def add_taxi_Ndays_rolling(df, days):
     """
     This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
@@ -42,10 +30,6 @@ def add_taxi_Ndays_rolling(df, days):
         df=df.merge(df_taxi_roll, on=[cols[key][0], 'fl_date' ] , how='left')
     return df
 
-
-# In[3]:
-
-
 def add_traffic_rolling(df, days):
     """
     This function calculates and adds additional column for rolling average number of flights per airport per day.
@@ -75,10 +59,6 @@ def add_traffic_rolling(df, days):
         df=df.merge(count_flights_roll, on=[item, 'fl_date' ] , how='left')
         
     return df
-
-
-# In[4]:
-
 
 def replace_nan_with_mean(dataframe,column):
     """
@@ -112,10 +92,6 @@ def replace_nan_with_mean(dataframe,column):
     
     # Return processed DataFrame
     return dataframe
-
-
-# In[ ]:
-
 
 
 
