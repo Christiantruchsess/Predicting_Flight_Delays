@@ -76,3 +76,35 @@ def add_traffic_rolling(df, days):
         
     return df
 
+def replace_nan_with_mean(dataframe,column):
+    """
+    This function replaces all NaN values for a given column in a dataframe with the mean of the column values,
+        _without_ taking outliers into consideration when calculating said mean.
+    Args:
+        dataframe - Pandas DataFrame 
+        column - column of DataFrame, input as a string. 
+    Output:
+        Processed DataFrame is returned.
+    """
+    # The .describe() method for Pandas DataFrames outputs a Pandas Series; index number 4 corresponds to 
+    # Quartile 1, index number 6 to Quartile 3. The Inter-Quartile Range (IQR) is then calculated as Q3 - Q1.
+    Q1 = dataframe[column].describe()[4]
+    Q3 = dataframe[column].describe()[6]
+    IQR = float(Q3 - Q1)
+    # An outlier threshold is calculated as 1.5 times the IQR. Any value that is below Q1 minus the threshold,
+    # or above Q3 plus the threshold, is considered an outlier. 
+    outlier_threshold = 1.5 * IQR
+    lower_limit = Q1 - outlier_threshold
+    upper_limit = Q3 + outlier_threshold
+    
+    # Use boolean operators to define subset of column values that exclude outliers
+    subset_without_outliers = dataframe[(dataframe[column] > lower_limit) & (dataframe[column] < upper_limit)][column]
+    
+    # Calculate the mean for said subset. 
+    mean_without_outliers = subset_without_outliers.mean()
+     
+    # Replace NaN values with previously calculated mean, using .fillna() Pandas method.
+    dataframe = dataframe.fillna(mean_without_outliers,inplace=True)
+    
+    # Return processed DataFrame
+    return dataframe
