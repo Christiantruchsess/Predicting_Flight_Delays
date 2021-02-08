@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[10]:
+
+
+import pandas as pd
+
+
+# In[11]:
+
+
 def add_taxi_Ndays_rolling(df, days):
     """
     This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
@@ -16,7 +28,7 @@ def add_taxi_Ndays_rolling(df, days):
     
     #Iterating the keys in cols which has columns we interested in.
     for key in cols.keys():
-        
+        s
         #First we calculate average taxi time per airport per day
         df_taxi=df[[cols[key][0], 'fl_date',  cols[key][1]]].groupby([cols[key][0], 'fl_date']).mean().reset_index()
 
@@ -29,6 +41,10 @@ def add_taxi_Ndays_rolling(df, days):
         #Merging with initial DataFrame
         df=df.merge(df_taxi_roll, on=[cols[key][0], 'fl_date' ] , how='left')
     return df
+
+
+# In[12]:
+
 
 def add_traffic_rolling(df, days):
     """
@@ -59,6 +75,10 @@ def add_traffic_rolling(df, days):
         df=df.merge(count_flights_roll, on=[item, 'fl_date' ] , how='left')
         
     return df
+
+
+# In[1]:
+
 
 def replace_nan_with_mean(df,column):
     """
@@ -93,6 +113,10 @@ def replace_nan_with_mean(df,column):
     # Return processed DataFrame
     return df
 
+
+# In[2]:
+
+
 def make_dates_ordinal(df, dates_column):
     """
     This function converts the dates of a DataFrame column to integers, in order to easily fit the data to a regression model. 
@@ -121,6 +145,10 @@ def make_dates_ordinal(df, dates_column):
     
     # Returns processed DataFrame
     return df
+
+
+# In[ ]:
+
 
 def distill_features(df, full_features = ['fl_date','mkt_unique_carrier','branded_code_share','mkt_carrier','mkt_carrier_fl_num',
                                           'op_unique_carrier','tail_num','op_carrier_fl_num','origin_airport_id','origin',
@@ -151,3 +179,13 @@ def distill_features(df, full_features = ['fl_date','mkt_unique_carrier','brande
     # Redefine and return DataFrame
     df = df[training_features]
     return df
+
+
+# In[ ]:
+
+
+def make_month_dummies(df, date_column):
+    df['month']=df[date_column].dt.month
+    df = pd.get_dummies(df, columns=['month'])
+    return df
+
