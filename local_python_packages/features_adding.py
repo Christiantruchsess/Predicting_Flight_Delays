@@ -86,9 +86,38 @@ def replace_nan_with_mean(df,column):
     
     # Calculate the mean for said subset. 
     mean_without_outliers = subset_without_outliers.mean()
-     
+    
     # Replace NaN values with previously calculated mean, using .fillna() Pandas method.
-    df = df.fillna(mean_without_outliers,inplace=True)
+    df[column].fillna(mean_without_outliers,inplace=True)
     
     # Return processed DataFrame
+    return df
+
+def make_dates_ordinal(df, dates_column):
+    """
+    This function converts the dates of a DataFrame column to integers, in order to easily fit the data to a regression model. 
+    
+    More specifically, the function toordinal() returns the proleptic Gregorian ordinal of a date.
+    
+    In simple terms datetime.toordinal() returns the day count from the date 01/01/01
+    
+    Though Gregorian calendar was not followed before October 1582, several computer
+        systems follow the Gregorian calendar for the dates that comes even before October 1582.
+        Python's date class also does the same.
+    
+    Args:
+        df - Pandas DataFrame 
+        dates_column - column of DataFrame, input as a string. All values in column must be 
+            of type datetime64[ns].
+    Output:
+        Processed DataFrame is returned.
+    """
+    
+    # The function imports the required datetime module.
+    import datetime as dt
+    
+    # Applies datetime.toordinal() function to desired column of DataFrame.
+    df[dates_column] = df[dates_column].map(dt.datetime.toordinal)
+    
+    # Returns processed DataFrame
     return df
