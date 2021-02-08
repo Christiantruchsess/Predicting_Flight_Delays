@@ -1,4 +1,4 @@
-def __add_taxi_Ndays_rolling__(df, days):
+def add_taxi_Ndays_rolling(df, days):
     """
     This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
     
