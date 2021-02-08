@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[10]:
+
+
+import pandas as pd
+
+
+# In[11]:
+
+
 def add_taxi_Ndays_rolling(df, days):
     """
     This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
@@ -30,6 +42,10 @@ def add_taxi_Ndays_rolling(df, days):
         df=df.merge(df_taxi_roll, on=[cols[key][0], 'fl_date' ] , how='left')
     return df
 
+
+# In[12]:
+
+
 def add_traffic_rolling(df, days):
     """
     This function calculates and adds additional column for rolling average number of flights per airport per day.
@@ -60,38 +76,82 @@ def add_traffic_rolling(df, days):
         
     return df
 
-def replace_nan_with_mean(df,column):
+
+# In[1]:
+
+def return_outlier_limits(df,column):
     """
-    This function replaces all NaN values for a given column in a dataframe with the mean of the column values,
-        _without_ taking outliers into consideration when calculating said mean.
+    Function calculates Interquartile Range (IQR) in order to return upper and lower limits after which to consider a value an outlier. 
+        A limit is defined as 1.5 times the IQR below Quartile 1 (Q1) or above Quartile 3 (Q3).
+    
     Args:
         df - Pandas DataFrame 
-        column - column of DataFrame, input as a string. 
+        column - Column of DataFrame with the aforementioned outliers, input as a string.
     Output:
-        Processed DataFrame is returned.
+        Processed DataFrame is returned (subset of original).
     """
+    
     # The .describe() method for Pandas DataFrames outputs a Pandas Series; index number 4 corresponds to 
     # Quartile 1, index number 6 to Quartile 3. The Inter-Quartile Range (IQR) is then calculated as Q3 - Q1.
     Q1 = df[column].describe()[4]
     Q3 = df[column].describe()[6]
     IQR = float(Q3 - Q1)
-    # An outlier threshold is calculated as 1.5 times the IQR. Any value that is below Q1 minus the threshold,
-    # or above Q3 plus the threshold, is considered an outlier. 
+    
+    # An outlier threshold is calculated as 1.5 times the IQR. 
     outlier_threshold = 1.5 * IQR
     lower_limit = Q1 - outlier_threshold
     upper_limit = Q3 + outlier_threshold
     
+    limits = [lower_limit, upper_limit]
+   
+    return limits
+
+def remove_outliers(df, column):
+    """
+    Function removes rows with outliers from a dataframe, as defined by the return_outlier_limits function. 
+    
+    Args:
+        df - Pandas DataFrame 
+        column - Column of DataFrame with the aforementioned outliers, input as a string.
+    Output:
+        Processed DataFrame is returned (subset of original).
+    """
+   
+    # Call return_outlier_limits function to return list `limit` with two values, lower and upper: limit[0] corresponds to the lower limit, 
+    # limit[1] to the upper limit. 
+    limits = return_outlier_limits(df,column)
+    
     # Use boolean operators to define subset of column values that exclude outliers
-    subset_without_outliers = df[(df[column] > lower_limit) & (df[column] < upper_limit)][column]
+    df_no_outliers = df[(df[column] > limits[0]) & (df[column] < limits[1])]
     
-    # Calculate the mean for said subset. 
-    mean_without_outliers = subset_without_outliers.mean()
-    
+    return df_no_outliers
+
+def replace_nan_with_mean(df,column,include_outliers=False):
+    """
+    This function replaces all NaN values for a given column in a dataframe with the mean of the column values.
+   
+    Args:
+        df - Pandas DataFrame 
+        column - Column of DataFrame, input as a string.
+        include_outliers - If True, calculates mean of all values,
+            if False, does not consider outliers when calculating mean. Defaults to False.
+    Output:
+        Processed DataFrame is returned.
+    """
+    if include_outliers == False:
+        df_no_outliers = remove_outliers(df,column)
+        mean = df_no_outliers[column].mean()
+    else:
+        mean = df[column].mean()
+        
     # Replace NaN values with previously calculated mean, using .fillna() Pandas method.
-    df[column].fillna(mean_without_outliers,inplace=True)
-    
+    df[column].fillna(mean,inplace=True)
+   
     # Return processed DataFrame
     return df
+
+# In[2]:
+
 
 def make_dates_ordinal(df, dates_column):
     """
@@ -122,6 +182,10 @@ def make_dates_ordinal(df, dates_column):
     # Returns processed DataFrame
     return df
 
+
+# In[ ]:
+
+
 def distill_features(df, full_features = ['fl_date','mkt_unique_carrier','branded_code_share','mkt_carrier','mkt_carrier_fl_num',
                                           'op_unique_carrier','tail_num','op_carrier_fl_num','origin_airport_id','origin',
                                           'origin_city_name','dest_airport_id','dest','dest_city_name','crs_dep_time','crs_arr_time',
@@ -151,3 +215,13 @@ def distill_features(df, full_features = ['fl_date','mkt_unique_carrier','brande
     # Redefine and return DataFrame
     df = df[training_features]
     return df
+
+
+# In[ ]:
+
+
+def make_month_dummies(df, date_column):
+    df['month']=df[date_column].dt.month
+    df = pd.get_dummies(df, columns=['month'])
+    return df
+
