@@ -28,7 +28,7 @@ def add_taxi_Ndays_rolling(df, days):
     
     #Iterating the keys in cols which has columns we interested in.
     for key in cols.keys():
-        s
+        
         #First we calculate average taxi time per airport per day
         df_taxi=df[[cols[key][0], 'fl_date',  cols[key][1]]].groupby([cols[key][0], 'fl_date']).mean().reset_index()
 
