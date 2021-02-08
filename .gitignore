@@ -1,7 +1,3 @@
-DL flights in 2019.csv
-AA flights test 2019.csv
-UA flights 2019.csv
-UA flights 2019.zip
-DL flights 2019.csv
-.ipynb_checkpoints/UA flights 2019-checkpoint.csv
+*.zip
 *.csv
+.ipynb_checkpoints/
