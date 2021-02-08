@@ -121,3 +121,33 @@ def make_dates_ordinal(df, dates_column):
     
     # Returns processed DataFrame
     return df
+
+def distill_features(df, full_features = ['fl_date','mkt_unique_carrier','branded_code_share','mkt_carrier','mkt_carrier_fl_num',
+                                          'op_unique_carrier','tail_num','op_carrier_fl_num','origin_airport_id','origin',
+                                          'origin_city_name','dest_airport_id','dest','dest_city_name','crs_dep_time','crs_arr_time',
+                                          'dup','crs_elapsed_time','flights','distance'],
+                        removal_list=['mkt_unique_carrier','branded_code_share','mkt_carrier','op_unique_carrier','op_carrier_fl_num',
+                                        'tail_num','origin','origin_city_name','dest','dest_city_name','dup','flights'],
+                         target='arr_delay'):
+    """
+    This function reduces the features of a DataFrame to only those relevant to the analysis or model trained at hand, including
+    the target variable. 
+    
+    Args:
+        df - Pandas DataFrame 
+        full_features - List of features to be reduced. Defaults to case-specific "flights_test" features if no input is given.
+        removal_list - List of features to be removed. Defaults to case-specific "flights_test" features if no input is given.
+        target - Target variable to be included in final DataFrame. Defaults to case-specific 'arr_delay' if no input is given. 
+    Output:
+        Processed DataFrame with reduced number of features is returned.
+    """
+    
+    # Implement list comprehension to build `training_features` list composed.
+    training_features = [ x for x in full_features if x not in removal_list]
+    
+    # Append target variable column to DataFrame
+    training_features.append('arr_delay')
+    
+    # Redefine and return DataFrame
+    df = df[training_features]
+    return df
