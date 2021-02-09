@@ -196,6 +196,17 @@ def distill_features(df, desired_features = ['fl_date','mkt_carrier_fl_num','ori
 
 
 def make_month_dummies(df, date_column):
+
+    """
+    This function adds dummy variable columns for months.
+    
+    Args:
+        df - Dataframe which needed to be processed.
+        date_column as string. Column with dates
+    Output:
+        Dataframe with dummy varialbles.
+    """
+
     df['month']=df[date_column].dt.month
     df = pd.get_dummies(df, columns=['month'])
     return df
