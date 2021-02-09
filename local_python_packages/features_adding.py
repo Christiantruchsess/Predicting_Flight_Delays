@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[10]:
+# In[1]:
 
 
 import pandas as pd
 
 
-# In[11]:
+# In[2]:
 
 
 def add_taxi_Ndays_rolling(df, days):
@@ -33,7 +33,7 @@ def add_taxi_Ndays_rolling(df, days):
         df_taxi=df[[cols[key][0], 'fl_date',  cols[key][1]]].groupby([cols[key][0], 'fl_date']).mean().reset_index()
 
         #Based on our average taxi time we can calculate rolling average
-        df_taxi_roll=df_taxi.groupby([cols[key][0]]).rolling(days, on='fl_date'
+        df_taxi_roll=df_taxi.groupby([cols[key][0]]).rolling(days, on='fl_date', min_periods=2
                                                                            ).agg({cols[key][1]:'mean'}).reset_index()
         #Renaming column to avoid collision during merging
         df_taxi_roll.rename(columns={cols[key][1]: str(days) +'d ' + cols[key][1]}, inplace=True)
@@ -43,7 +43,7 @@ def add_taxi_Ndays_rolling(df, days):
     return df
 
 
-# In[12]:
+# In[3]:
 
 
 def add_traffic_rolling(df, days):
@@ -66,7 +66,7 @@ def add_traffic_rolling(df, days):
         count_flight=df[[item, 'fl_date', 'mkt_carrier']].groupby([item, 'fl_date'
                                                                              ]).count().reset_index()
         
-        count_flights_roll= count_flight.groupby([item]).rolling(days, on='fl_date'
+        count_flights_roll= count_flight.groupby([item]).rolling(days, on='fl_date', min_periods=2
                                                                        ).agg({'mkt_carrier':'mean'}).reset_index()
         #Renaming to avoid collision during merging
         count_flights_roll.rename(columns={'mkt_carrier': str(days) + 'd roll flts ' + item}, inplace=True)
@@ -77,7 +77,8 @@ def add_traffic_rolling(df, days):
     return df
 
 
-# In[1]:
+# In[4]:
+
 
 def return_outlier_limits(df,column):
     """
@@ -106,6 +107,10 @@ def return_outlier_limits(df,column):
    
     return limits
 
+
+# In[5]:
+
+
 def remove_outliers(df, column):
     """
     Function removes rows with outliers from a dataframe, as defined by the return_outlier_limits function. 
@@ -125,6 +130,10 @@ def remove_outliers(df, column):
     df_no_outliers = df[(df[column] > limits[0]) & (df[column] < limits[1])]
     
     return df_no_outliers
+
+
+# In[6]:
+
 
 def replace_nan_with_mean(df,column,include_outliers=False):
     """
@@ -150,7 +159,8 @@ def replace_nan_with_mean(df,column,include_outliers=False):
     # Return processed DataFrame
     return df
 
-# In[2]:
+
+# In[7]:
 
 
 def make_dates_ordinal(df, dates_column):
@@ -183,7 +193,7 @@ def make_dates_ordinal(df, dates_column):
     return df
 
 
-# In[ ]:
+# In[8]:
 
 
 def distill_features(df, desired_features = ['fl_date','mkt_carrier_fl_num','origin_airport_id','dest_airport_id','crs_dep_time',
@@ -192,11 +202,10 @@ def distill_features(df, desired_features = ['fl_date','mkt_carrier_fl_num','ori
     return df
 
 
-# In[ ]:
+# In[9]:
 
 
 def make_month_dummies(df, date_column):
-
     """
     This function adds dummy variable columns for months.
     
@@ -206,10 +215,14 @@ def make_month_dummies(df, date_column):
     Output:
         Dataframe with dummy varialbles.
     """
-
+    
     df['month']=df[date_column].dt.month
     df = pd.get_dummies(df, columns=['month'])
     return df
+
+
+# In[10]:
+
 
 def merging_weather_flights(df_flights, df_weather):
     """
@@ -229,7 +242,7 @@ def merging_weather_flights(df_flights, df_weather):
     
     #Dropping 'weather_type' column.
     try:
-        df_weather.drop(columns=['weathertype'], inplace=True)
+        df_weather.drop(columns=['Unnamed: 0','weathertype'], inplace=True)
     except TypeError:
         pass
     
@@ -271,15 +284,24 @@ def merging_weather_flights(df_flights, df_weather):
                     df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[0]]=1 #Updated respective column
                     df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[1]]=1 #Updated respective column
                     df_flights.drop(columns=[city_cond + '_' + cond], inplace=True) #Dropping the column
-
+    
     #Dropping redundunt columns
-    df_flights.drop(columns=['origin_cond_Clear', 'dest_cond_Clear'], inplace=True)            
+    df_flights.drop(columns=['origin_cond_Clear', 'dest_cond_Clear'], inplace=True)
+    
     return df_flights
+
+
+# In[11]:
+
 
 def quick_split(X,y,train_ratio=0.80):
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=train_ratio)
     return [X_train,X_test,y_train,y_test]
+
+
+# In[13]:
+
 
 def add_dep_delay_Ndays_rolling(df, days):
     """
@@ -295,8 +317,11 @@ def add_dep_delay_Ndays_rolling(df, days):
                 ['origin_airport_id', 'fl_date']).mean().reset_index()
     #Calculate rolling average per airport
     dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','origin_airport_id']].groupby(
-            'origin_airport_id').rolling(days, on='fl_date', min_periods=(days//2)).agg({'dep_delay':'mean'}).reset_index()
+            'origin_airport_id').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).reset_index()
+    
+    dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_time'}, inplace=True)
     
     #Merging with initial DataFrame
     df=df.merge(dep_delay_df, on=['origin_airport_id', 'fl_date' ] , how='left')
     return df
+
