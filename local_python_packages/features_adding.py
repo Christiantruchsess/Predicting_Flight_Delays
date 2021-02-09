@@ -88,7 +88,7 @@ def return_outlier_limits(df,column):
         df - Pandas DataFrame 
         column - Column of DataFrame with the aforementioned outliers, input as a string.
     Output:
-        Processed DataFrame is returned (subset of original).
+        List with lower and upper outlier limits.
     """
     
     # The .describe() method for Pandas DataFrames outputs a Pandas Series; index number 4 corresponds to 
@@ -271,5 +271,7 @@ def merging_weather_flights(df_flights, df_weather):
                     df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[0]]=1 #Updated respective column
                     df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[1]]=1 #Updated respective column
                     df_flights.drop(columns=[city_cond + '_' + cond], inplace=True) #Dropping the column
-                
+
+    #Dropping redundunt columns
+    df_flights.drop(columns=['origin_cond_Clear', 'dest_cond_Clear'], inplace=True)            
     return df_flights
