@@ -280,3 +280,23 @@ def quick_split(X,y,train_ratio=0.80):
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=train_ratio)
     return [X_train,X_test,y_train,y_test]
+
+def add_dep_delay_Ndays_rolling(df, days):
+    """
+    This function adds additional column with N-days rolling mean for departure delay per origin airport.
+    Args:
+        df - Dataframe with flights information
+        days - Number of days to calculate rolling mean
+    Output:
+        df - processed dataframe with additional column
+    """
+    #Calculating average for aiport per day
+    dep_delay_df = df[['fl_date', 'dep_delay','origin_airport_id']].groupby(
+                ['origin_airport_id', 'fl_date']).mean().reset_index()
+    #Calculate rolling average per airport
+    dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','origin_airport_id']].groupby(
+            'origin_airport_id').rolling(days, on='fl_date', min_periods=(days//2)).agg({'dep_delay':'mean'}).reset_index()
+    
+    #Merging with initial DataFrame
+    df=df.merge(dep_delay_df, on=['origin_airport_id', 'fl_date' ] , how='left')
+    return df
