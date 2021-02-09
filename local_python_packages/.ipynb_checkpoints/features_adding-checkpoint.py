@@ -88,7 +88,7 @@ def return_outlier_limits(df,column):
         df - Pandas DataFrame 
         column - Column of DataFrame with the aforementioned outliers, input as a string.
     Output:
-        Processed DataFrame is returned (subset of original).
+        List with lower and upper outlier limits.
     """
     
     # The .describe() method for Pandas DataFrames outputs a Pandas Series; index number 4 corresponds to 
@@ -196,7 +196,87 @@ def distill_features(df, desired_features = ['fl_date','mkt_carrier_fl_num','ori
 
 
 def make_month_dummies(df, date_column):
+
+    """
+    This function adds dummy variable columns for months.
+    
+    Args:
+        df - Dataframe which needed to be processed.
+        date_column as string. Column with dates
+    Output:
+        Dataframe with dummy varialbles.
+    """
+
     df['month']=df[date_column].dt.month
     df = pd.get_dummies(df, columns=['month'])
     return df
 
+def merging_weather_flights(df_flights, df_weather):
+    """
+    This function merges weather data information to flights table based on three columns - 
+    'fl_date', 'origin_city_name', 'dest_city_name'.
+    
+    For each row in flights table additional columns will be added (for origin city and dest city) -
+        'wspd' - wind speed
+        'visibility'  - visibility
+        'conditions'  - weather conditions, which is categorical variable and will be converted to the dummy variables.
+    Args:
+        df_flights - dataframe with flights data.
+        df_weather - dataframe with weather data.
+    Output:
+        df_flights - processed flights dataframe with additional columns.
+    """
+    
+    #Dropping 'weather_type' column.
+    try:
+        df_weather.drop(columns=['weathertype'], inplace=True)
+    except TypeError:
+        pass
+    
+    #Preparing columns for origin city.
+    df_weather_origin = df_weather.rename(columns={'city_name':'origin_city_name',
+                              'wspd':'origin_city_wspd',
+                                'visibility':'origin_visibility',
+                                'conditions':'origin_cond'})
+    
+    #Merging origin city weather to the flights dataframe. Left join is used.
+    df_flights = df_flights.merge(df_weather_origin, on=['fl_date', 'origin_city_name'], how='left')
+    
+    #Preparing columns for dest city.
+    df_weather_dest = df_weather.rename(columns={'city_name':'dest_city_name',
+                              'wspd':'dest_city_wspd',
+                                'visibility':'dest_visibility',
+                                'conditions':'dest_cond'})
+    
+    #Merging destination city weather to the flights dataframe. Left join is used.
+    df_flights = df_flights.merge(df_weather_dest, on=['fl_date', 'dest_city_name'], how='left')
+    
+    #Making dummy variables out of categorical ones:'origin_cond', 'dest_cond'
+    df_flights = pd.get_dummies(df_flights, columns=['origin_cond', 'dest_cond'])
+    
+    #list of different categories. There are some categories which consists of two ones like "Snow, Overcast" 'Rain, Partially cloudy' 
+    #The aim is to get rid of them from the dataframe
+    list_categories=df_weather['conditions'].unique()
+    
+    #City prefix
+    columns=['origin_cond', 'dest_cond']
+    
+    for cond in list_categories:
+        #Need to find those with comma in the name
+        if type(cond) == type('some string') and cond.find(',')>-1:
+            #comma found
+            lst= cond.split(', ')
+            for city_cond in columns:
+                if city_cond + '_' + cond in df_flights.columns:
+                    df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[0]]=1 #Updated respective column
+                    df_flights.loc[df_flights[city_cond + '_' + cond]==1, city_cond + '_' + lst[1]]=1 #Updated respective column
+                    df_flights.drop(columns=[city_cond + '_' + cond], inplace=True) #Dropping the column
+
+    #Dropping redundunt columns
+    df_flights.drop(columns=['origin_cond_Clear', 'dest_cond_Clear'], inplace=True)            
+    return df_flights
+
+def quick_split(X,y,train_ratio=0.80):
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=train_ratio)
+    return [X_train,X_test,y_train,y_test]

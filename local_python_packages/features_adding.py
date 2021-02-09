@@ -275,3 +275,8 @@ def merging_weather_flights(df_flights, df_weather):
     #Dropping redundunt columns
     df_flights.drop(columns=['origin_cond_Clear', 'dest_cond_Clear'], inplace=True)            
     return df_flights
+
+def quick_split(X,y,train_ratio=0.80):
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(X,y,train_size=train_ratio)
+    return [X_train,X_test,y_train,y_test]
