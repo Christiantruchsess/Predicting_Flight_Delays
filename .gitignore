@@ -1,5 +1,6 @@
 *.zip
 *.csv
+*.pyc
 .ipynb_checkpoints/
 .DS_Store
 local_python_packages/.ipynb_checkpoints/
