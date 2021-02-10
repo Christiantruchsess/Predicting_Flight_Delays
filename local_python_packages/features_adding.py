@@ -325,3 +325,30 @@ def add_dep_delay_Ndays_rolling(df, days):
     df=df.merge(dep_delay_df, on=['origin_airport_id', 'fl_date' ] , how='left')
     return df
 
+
+# In[1]:
+
+
+def add_US_holidays(df, df_holidays):
+    """
+    This function adds additional boolean column to initial dataframe with US national holidays.
+    
+    Args:
+        df - Dataframe with flights information.
+        df_holidays - Dataframe with holidays.
+    Output:
+        df - Processed Dataframe with additional column.
+    """
+    cols=df_holidays.columns
+    df_holidays.rename(columns={cols[0]:'fl_date'}, inplace=True)
+    df_holidays.drop(cols[2], inplace=True)
+    df = df.merge(df_holidays, on='fl_date', how='left')
+    df= pd.get_dummies(df, columns=[cols[1]])
+    return df
+
+
+# In[ ]:
+
+
+
+
