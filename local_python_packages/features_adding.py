@@ -246,6 +246,9 @@ def merging_weather_flights(df_flights, df_weather):
     except TypeError:
         pass
     
+    #Adding additional column: (wspd / visibility ratio). Added 0.01 to avoid 0 values and division by zero.
+    df_weather['wspd/visibility']=(df_weather['wspd'] + 0.01)/ (df_weather['visibility'] + 0.01)
+    
     #Preparing columns for origin city.
     df_weather_origin = df_weather.rename(columns={'city_name':'origin_city_name',
                               'wspd':'origin_city_wspd',
@@ -326,7 +329,7 @@ def add_dep_delay_Ndays_rolling(df, days):
     return df
 
 
-# In[1]:
+# In[2]:
 
 
 def add_US_holidays(df, df_holidays):
@@ -341,7 +344,7 @@ def add_US_holidays(df, df_holidays):
     """
     cols=df_holidays.columns
     df_holidays.rename(columns={cols[0]:'fl_date'}, inplace=True)
-    df_holidays.drop(cols[2], inplace=True)
+    df_holidays.drop(cols[2], inplace=True, axis='columns')
     df = df.merge(df_holidays, on='fl_date', how='left')
     df= pd.get_dummies(df, columns=[cols[1]])
     return df
