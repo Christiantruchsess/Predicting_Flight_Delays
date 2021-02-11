@@ -10,13 +10,14 @@ import pandas as pd
 # In[2]:
 
 
-def add_taxi_Ndays_rolling(df, days):
+def add_taxi_Ndays_rolling(df, days, shift):
     """
     This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
     
     Args:
         df - df to process as DataFrame
         days - Days to calculate rolling number for taxi_in, taxi_out time
+        shift - Days to offset calculation into the past.
     Output:
         processed DataFrame is returned back
     """
@@ -34,7 +35,7 @@ def add_taxi_Ndays_rolling(df, days):
 
         #Based on our average taxi time we can calculate rolling average
         df_taxi_roll=df_taxi.groupby([cols[key][0]]).rolling(days, on='fl_date', min_periods=2
-                                                                           ).agg({cols[key][1]:'mean'}).reset_index()
+                                                                           ).agg({cols[key][1]:'mean'}).shift(shift).reset_index()
         #Renaming column to avoid collision during merging
         df_taxi_roll.rename(columns={cols[key][1]: str(days) +'d ' + cols[key][1]}, inplace=True)
         
@@ -46,14 +47,14 @@ def add_taxi_Ndays_rolling(df, days):
 # In[3]:
 
 
-def add_traffic_rolling(df, days):
+def add_traffic_rolling(df, days, shift):
     """
     This function calculates and adds additional column for rolling average number of flights per airport per day.
     
     Args:
         df - DataFrame to process.
         days - Days as integer to calculate rolling average
-        
+        shift - Days to offset calculation into the past.
     Output:
         dataframe - initial dataframe with additional column
     """
@@ -67,7 +68,7 @@ def add_traffic_rolling(df, days):
                                                                              ]).count().reset_index()
         
         count_flights_roll= count_flight.groupby([item]).rolling(days, on='fl_date', min_periods=2
-                                                                       ).agg({'mkt_carrier':'mean'}).reset_index()
+                                                                       ).agg({'mkt_carrier':'mean'}).shift(shift).reset_index()
         #Renaming to avoid collision during merging
         count_flights_roll.rename(columns={'mkt_carrier': str(days) + 'd roll flts ' + item}, inplace=True)
         
@@ -308,12 +309,13 @@ def quick_split(X,y,train_ratio=0.80):
 # In[13]:
 
 
-def add_dep_delay_Ndays_rolling(df, days):
+def add_dep_delay_Ndays_rolling(df, days, shift):
     """
     This function adds additional column with N-days rolling mean for departure delay per origin airport.
     Args:
         df - Dataframe with flights information
         days - Number of days to calculate rolling mean
+        shift - Days to offset calculation into the past.
     Output:
         df - processed dataframe with additional column
     """
@@ -322,7 +324,7 @@ def add_dep_delay_Ndays_rolling(df, days):
                 ['origin_airport_id', 'fl_date']).mean().reset_index()
     #Calculate rolling average per airport
     dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','origin_airport_id']].groupby(
-            'origin_airport_id').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).reset_index()
+            'origin_airport_id').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).shift(shift).reset_index()
     
     dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_time'}, inplace=True)
     
@@ -355,12 +357,13 @@ def add_US_holidays(df, df_holidays):
 # In[ ]:
 
 
-def add_dep_delay_Ndays_roll_per_tail_num(df, days):
+def add_dep_delay_Ndays_roll_per_tail_num(df, days, shift):
     """
     This function adds additional column with N-days rolling mean for departure delay per tail_num.
     Args:
         df - Dataframe with flights information
         days - Number of days to calculate rolling mean
+        shift - Days to offset calculation into the past.
     Output:
         df - processed dataframe with additional column
     """
@@ -369,11 +372,40 @@ def add_dep_delay_Ndays_roll_per_tail_num(df, days):
                 ['tail_num', 'fl_date']).mean().reset_index()
     #Calculate rolling average per tail_num
     dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','tail_num']].groupby(
-            'tail_num').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).reset_index()
+            'tail_num').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).shift(shift).reset_index()
     
     dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_delay_per_tail_num'}, inplace=True)
     
     #Merging with initial DataFrame
     df=df.merge(dep_delay_df, on=['tail_num', 'fl_date' ] , how='left')
+    return df
+
+
+# In[ ]:
+
+
+def add_arr_delay_Ndays_roll(df, days, shift, cols_list):
+    """
+    This function adds additional column with N-days rolling mean for arrival delay per column in cols_list.
+    Args:
+        df - Dataframe with flights information
+        days - Number of days to calculate rolling mean
+        shift - Days to offset calculation into the past.
+        cols_list - List of columns to calculate mean arrival delays for.
+    Output:
+        df - processed dataframe with additional column
+    """
+    for item in cols_list:
+        #Calculating average for tail_num per day
+        dep_delay_df = df[['fl_date', 'arr_delay', item]].groupby(
+                    [item, 'fl_date']).mean().reset_index()
+        #Calculate rolling average per tail_num
+        dep_delay_df=dep_delay_df[['fl_date', 'arr_delay', item]].groupby(
+                item).rolling(days, on='fl_date', min_periods=2).agg({'arr_delay':'mean'}).shift(shift).reset_index()
+
+        dep_delay_df.rename(columns={'arr_delay':str(days) + ' days roll arr_delay_per_' + item}, inplace=True)
+
+        #Merging with initial DataFrame
+        df=df.merge(dep_delay_df, on=[item, 'fl_date' ] , how='left')
     return df
 
