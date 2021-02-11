@@ -355,5 +355,25 @@ def add_US_holidays(df, df_holidays):
 # In[ ]:
 
 
-
+def add_dep_delay_Ndays_roll_per_tail_num(df, days):
+    """
+    This function adds additional column with N-days rolling mean for departure delay per tail_num.
+    Args:
+        df - Dataframe with flights information
+        days - Number of days to calculate rolling mean
+    Output:
+        df - processed dataframe with additional column
+    """
+    #Calculating average for tail_num per day
+    dep_delay_df = df[['fl_date', 'dep_delay','tail_num']].groupby(
+                ['tail_num', 'fl_date']).mean().reset_index()
+    #Calculate rolling average per tail_num
+    dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','tail_num']].groupby(
+            'tail_num').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).reset_index()
+    
+    dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_time_per_tail_num'}, inplace=True)
+    
+    #Merging with initial DataFrame
+    df=df.merge(dep_delay_df, on=['tail_num', 'fl_date' ] , how='left')
+    return df
 
