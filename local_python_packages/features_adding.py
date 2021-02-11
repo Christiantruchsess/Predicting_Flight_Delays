@@ -253,7 +253,8 @@ def merging_weather_flights(df_flights, df_weather):
     df_weather_origin = df_weather.rename(columns={'city_name':'origin_city_name',
                               'wspd':'origin_city_wspd',
                                 'visibility':'origin_visibility',
-                                'conditions':'origin_cond'})
+                                'conditions':'origin_cond',
+                                'wspd/visibility':'origin_wspd/visib'})
     
     #Merging origin city weather to the flights dataframe. Left join is used.
     df_flights = df_flights.merge(df_weather_origin, on=['fl_date', 'origin_city_name'], how='left')
@@ -262,7 +263,8 @@ def merging_weather_flights(df_flights, df_weather):
     df_weather_dest = df_weather.rename(columns={'city_name':'dest_city_name',
                               'wspd':'dest_city_wspd',
                                 'visibility':'dest_visibility',
-                                'conditions':'dest_cond'})
+                                'conditions':'dest_cond',
+                                'wspd/visibility':'dest_wspd/visib'})
     
     #Merging destination city weather to the flights dataframe. Left join is used.
     df_flights = df_flights.merge(df_weather_dest, on=['fl_date', 'dest_city_name'], how='left')
