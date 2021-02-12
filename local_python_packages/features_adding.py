@@ -330,7 +330,7 @@ def add_dep_delay_Ndays_rolling(df, days, shift):
     dep_delay_df=dep_delay_df[['fl_date', 'dep_delay','origin_airport_id']].groupby(
             'origin_airport_id').rolling(days, on='fl_date', min_periods=2).agg({'dep_delay':'mean'}).shift(shift).reset_index()
     
-    dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_time'}, inplace=True)
+    dep_delay_df.rename(columns={'dep_delay':str(days) + ' days roll dep_delay'}, inplace=True)
     
     #Merging with initial DataFrame
     df=df.merge(dep_delay_df, on=['origin_airport_id', 'fl_date' ] , how='left')
