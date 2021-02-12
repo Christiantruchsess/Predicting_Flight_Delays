@@ -12,7 +12,7 @@ import pandas as pd
 
 def add_taxi_Ndays_rolling(df, days, shift):
     """
-    This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport per day.
+    This function calculates and adds additional columns for rolling average taxi_in/taxi_out time per airport/carrier per day.
     
     Args:
         df - df to process as DataFrame
@@ -21,8 +21,11 @@ def add_taxi_Ndays_rolling(df, days, shift):
     Output:
         processed DataFrame is returned back
     """
+    
     cols={'origin':['origin_airport_id', 'taxi_out'],
-             'destination':['dest_airport_id','taxi_in']}
+             'destination':['dest_airport_id','taxi_in'],
+             'carrier_taxi_out':['mkt_carrier_fl_num', 'taxi_out'],
+             'carrier_taxi_in':['mkt_carrier_fl_num', 'taxi_in']}
     
     df = df.sort_values(['fl_date']) #Sorting by fl_date just in case it was not sorted before. 
                                         #It is important for rolling average
@@ -37,7 +40,8 @@ def add_taxi_Ndays_rolling(df, days, shift):
         df_taxi_roll=df_taxi.groupby([cols[key][0]]).rolling(days, on='fl_date', min_periods=2
                                                                            ).agg({cols[key][1]:'mean'}).shift(shift).reset_index()
         #Renaming column to avoid collision during merging
-        df_taxi_roll.rename(columns={cols[key][1]: str(days) +'d ' + cols[key][1]}, inplace=True)
+        df_taxi_roll.rename(columns={cols[key][1]: str(days) +'d ' + cols[key][1] + ' by ' + cols[key][0]}, inplace=True)
+        
         
         #Merging with initial DataFrame
         df=df.merge(df_taxi_roll, on=[cols[key][0], 'fl_date' ] , how='left')
@@ -408,4 +412,42 @@ def add_arr_delay_Ndays_roll(df, days, shift, cols_list):
         #Merging with initial DataFrame
         df=df.merge(dep_delay_df, on=[item, 'fl_date' ] , how='left')
     return df
+
+def add_polynomial_features(df):
+    """
+    This functions adds additional polynomial (multiplication of two columns) features to the dataset.
+    Args:
+        df - Dataframe to process
+    Output:
+        df - Processed dataframe with additional features
+    """
+    df['orig_air X date']= df['fl_date'] * df['origin_airport_id'] 
+    df['dest_air X date']= df['fl_date'] * df['dest_airport_id'] 
+    df['mkt_carrier_fl_num X date']= df['fl_date'] * df['mkt_carrier_fl_num']  
+    df['tail_num X date'] = df['fl_date'] * abs(hash(str(df['tail_num'])))
+    
+    df['tail_num X dest airport'] = df['fl_date'] * df['dest_airport_id'] * abs(hash(str(df['tail_num'])))
+    
+    df['tail_num X origin airport'] =df['fl_date'] * df['origin_airport_id'] * abs(hash(str(df['tail_num'])))
+    
+    df['mkt_carrier X dest_airport']= df['mkt_carrier_fl_num']  * df['dest_airport_id'] 
+    df['mkt_carrier X origin_airport']= df['mkt_carrier_fl_num']  * df['origin_airport_id'] 
+    
+    df['7d roll taxi_out X tail_num']= df['7d taxi_out by origin_airport_id'] * abs(hash(str(df['tail_num'])))
+    df['7d roll taxi_in X tail_num']= df['7d taxi_in by dest_airport_id'] * abs(hash(str(df['tail_num'])))
+    
+    return df
+
+
+
+
+
+
+
+
+
+
+
+
+
 
